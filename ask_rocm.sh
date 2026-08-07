@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Send a prompt to a running minisgl server (see run_rocm.sh) and print the reply.
+# Send a prompt to a running minisgl server (see run_col_rocm.sh) and print the reply.
 #
 #   ./ask_rocm.sh "What is the capital of France?"
 #   MAX_TOKENS=128 ./ask_rocm.sh "Explain MoE routing in two sentences."

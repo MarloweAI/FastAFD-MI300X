@@ -13,7 +13,7 @@ machine without changing the serving implementation.
    `"$ENV_PREFIX/bin/hf" download openai/gpt-oss-120b --local-dir "$PWD/models/gpt-oss-120b"`.
    Export `MODEL="$PWD/models/gpt-oss-120b"`.
 5. For the validated configuration, export `MINISGL_MXFP4_PACKED=1` and run
-   `TP=4 GPUS=0,1,2,3 GRAPH_MAX_BS=32 ./run_rocm.sh`.
+   `TP=4 GPUS=0,1,2,3 GRAPH_MAX_BS=32 ./run_col_rocm.sh`.
 6. Wait for `/v1/chat/completions` on port 19295, then run `./ask_rocm.sh`.
 7. Run `experiments/run_decode_grid.sh` only after the first request has
    completed and JIT/autotuning has settled.

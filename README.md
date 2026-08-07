@@ -70,7 +70,7 @@ has been correctness/performance validated at TP2 and TP4.
 export ENV_PREFIX="$PWD/.conda-env"
 export MODEL="$PWD/models/gpt-oss-120b"
 export MINISGL_MXFP4_PACKED=1
-TP=4 GPUS=0,1,2,3 GRAPH_MAX_BS=32 PORT=19295 ./run_rocm.sh
+TP=4 GPUS=0,1,2,3 GRAPH_MAX_BS=32 PORT=19295 ./run_col_rocm.sh
 ```
 
 First launch JIT-compiles HIP/Triton kernels into `cache/`; allow roughly 1–3

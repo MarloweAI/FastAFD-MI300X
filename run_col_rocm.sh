@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Start minisgl on AMD MI300X (gfx942) with the working ROCm configuration.
 #
-#   ./run_rocm.sh                 # BF16 Qwen3-30B-A3B, TP1, port 19295
-#   TP=8 ./run_rocm.sh            # all 8 GPUs (tensor parallel, colocated)
-#   PORT=19300 ./run_rocm.sh      # different port
-#   GRAPH_MAX_BS=0 ./run_rocm.sh  # disable HIP graphs (debugging / A-B)
-#   MODEL=/path/to/model ./run_rocm.sh
+#   ./run_col_rocm.sh                 # BF16 Qwen3-30B-A3B, TP1, port 19295
+#   TP=8 ./run_col_rocm.sh            # all 8 GPUs (tensor parallel, colocated)
+#   PORT=19300 ./run_col_rocm.sh      # different port
+#   GRAPH_MAX_BS=0 ./run_col_rocm.sh  # disable HIP graphs (debugging / A-B)
+#   MODEL=/path/to/model ./run_col_rocm.sh
 #
 # TP > 1 uses pynccl (ported to RCCL in this branch) rather than torch.distributed,
 # because torch's process-group watchdog makes HIP graph capture impossible -- see the

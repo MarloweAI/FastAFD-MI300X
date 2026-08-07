@@ -32,4 +32,4 @@ export PATH="$ENV_PREFIX/bin:$ROCM_PATH/bin:$PATH"
 "$ENV_PREFIX/bin/python" "$ROOT/scripts/check_rocm_runtime.py"
 
 echo "[bootstrap] ready"
-echo "ENV_PREFIX=$ENV_PREFIX MODEL=/path/to/model TP=4 GPUS=0,1,2,3 ./run_rocm.sh"
+echo "ENV_PREFIX=$ENV_PREFIX MODEL=/path/to/model TP=4 GPUS=0,1,2,3 ./run_col_rocm.sh"
