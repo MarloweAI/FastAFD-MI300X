@@ -1,0 +1,8 @@
+FastAFD MI300X minimal runtime
+source_revision=9512cb8edd0e
+gpu_arch=gfx942
+rocm_family=7.x
+model_weights=included:no
+python_environment=included:no
+jit_cache=included:no
+cuda_deepep_deepgemm_sources=included:no

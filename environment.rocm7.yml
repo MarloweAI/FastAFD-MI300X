@@ -1,0 +1,80 @@
+name: minisgl-rocm7
+channels:
+  - conda-forge
+# NOTE: no `nvidia` channel. Nothing in this environment comes from NVIDIA.
+
+# ROCm/MI300X counterpart to environment.cuda130.yml, for gfx942 (CDNA3).
+#
+# Create with:
+#   conda env create -f environment.rocm7.yml
+#   export ENV_NAME=minisgl-rocm7
+#   ./scripts/enter_clean_rocm.sh minisgl-rocm7
+#   pip install -e .
+#
+# Deliberate differences from environment.cuda130.yml
+# ===================================================
+#
+# DROPPED — CUDA toolchain (cuda-toolkit / cuda-cudart / cuda-nvcc 13.0)
+#   Replacement: the system ROCm 7.2.4 install at $ROCM_PATH (/opt/rocm), which
+#   provides hipcc, the device clang++, hipBLASLt and RCCL. There is no conda
+#   ROCm toolchain to install and none is needed. `tvm_ffi` detects a ROCm torch
+#   build and invokes `hipcc --offload-arch=gfx942` on its own, so the JIT path
+#   works without a conda-provided compiler.
+#
+# DROPPED — nvidia-nccl-cu13
+#   Replacement: RCCL, shipped with ROCm (/opt/rocm/lib/librccl.so,
+#   /opt/rocm/include/rccl/rccl.h). Do NOT pip-install any nvidia-nccl-*; the
+#   upstream README's force-reinstall block (nccl 2.30.4) does not apply here.
+#
+# DROPPED — flashinfer-python
+#   No ROCm build exists, and it is not just the attention backend: upstream uses
+#   it for RMSNorm, silu/gelu-and-mul, RoPE and sampling too. There is no drop-in
+#   replacement. This port substitutes torch/Triton implementations (and later
+#   AITER) — see dev_log/03_port_plan.md M1.4/M1.5. Installing it is impossible,
+#   so the port must supply those ops.
+#
+# CHANGED — torch 2.10.0+cu130  ->  torch 2.10.0+rocm7.0
+#   Same upstream-validated version, ROCm build, from the rocm7.0 wheel index.
+#
+# CHANGED — triton 3.6.0  ->  pytorch-triton-rocm
+#   The `triton` package on PyPI is the NVIDIA build. ROCm's Triton ships as
+#   `pytorch-triton-rocm` and is matched to the torch wheel (resolves to 3.5.1
+#   for torch 2.10.0+rocm7.0). Do not pin `triton` here — it will fight the
+#   torch wheel and produce a Triton that cannot target gfx942.
+#
+# NOT INCLUDED — cxx-compiler
+#   Intentional. conda's gcc + sysroot can shadow the system headers that
+#   /opt/rocm's clang++ expects, and the JIT builds were verified working with
+#   the system toolchain (dev_log/06_measured_results.md §3). `build_utils.py`
+#   already strips CPATH/C_INCLUDE_PATH/CPLUS_INCLUDE_PATH for this reason. Add
+#   it only if a build actually needs it, and re-run dev_log/probes/kernel_parity.py.
+#
+# KEPT — apache-tvm-ffi 0.1.9
+#   Verified to work unchanged on ROCm; it selects hipcc itself.
+
+dependencies:
+  - python=3.12
+  - pip>=25
+  - cmake>=3.22
+  - ninja
+  - pybind11>=2.13
+  - setuptools>=75
+  - wheel
+  - fastapi
+  - uvicorn
+  - pyzmq
+  - msgpack-python
+  - pydantic>=2
+  - transformers=4.57.3
+  - huggingface_hub
+  - apache-tvm-ffi=0.1.9
+  - accelerate
+  - modelscope
+  - prompt_toolkit
+  - openai
+  - numpy
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/rocm7.0
+      - torch==2.10.0+rocm7.0
+      - pytorch-triton-rocm
+      - ray==2.54.0

@@ -1,0 +1,29 @@
+name: minisgl-rocm7
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12.13
+  - pip=26.1.2
+  - cmake=4.4.0
+  - ninja=1.13.2
+  - pybind11=3.0.3
+  - setuptools=83.0.0
+  - wheel=0.47.0
+  - fastapi=0.140.11
+  - uvicorn=0.51.0
+  - pyzmq=27.1.0
+  - msgpack-python=1.2.1
+  - pydantic=2.13.4
+  - transformers=4.57.3
+  - huggingface_hub=0.36.0
+  - apache-tvm-ffi=0.1.9
+  - accelerate=1.14.0
+  - modelscope=1.37.1
+  - prompt_toolkit=3.0.53
+  - openai=2.49.0
+  - numpy=2.5.1
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/rocm7.0
+      - torch==2.10.0+rocm7.0
+      - pytorch-triton-rocm==3.5.1
+      - ray==2.54.0
