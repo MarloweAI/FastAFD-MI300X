@@ -1,10 +1,10 @@
-.conda-env/
-.venv/
-models/
-cache/
-results/
-dist/
-build/
+/.conda-env/
+/.venv/
+/models/
+/cache/
+/results/
+/dist/
+/build/
 *.egg-info/
 __pycache__/
 *.py[cod]
