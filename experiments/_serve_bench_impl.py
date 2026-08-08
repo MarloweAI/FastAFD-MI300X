@@ -17,17 +17,25 @@ from __future__ import annotations
 import argparse
 import concurrent.futures as cf
 import json
+import os
 import statistics
 import time
 import urllib.request
 
-MODEL_DIR = "/home/marlowe/models/Qwen3-30B-A3B-Instruct-2507"
+MODEL_DIR = os.environ.get(
+    "MODEL", "/home/marlowe/models/Qwen3-30B-A3B-Instruct-2507"
+)
 
 
 def build_prompt(isl: int) -> tuple[str, int]:
     """A prompt that tokenizes to (as close as possible to) `isl` tokens."""
     from transformers import AutoTokenizer
 
+    if not os.path.isdir(MODEL_DIR):
+        raise RuntimeError(
+            f"model directory does not exist: {MODEL_DIR}; export MODEL to the "
+            "same local model snapshot used by the running server"
+        )
     tok = AutoTokenizer.from_pretrained(MODEL_DIR)
     # Distinct-ish filler so the radix cache cannot collapse it; AFD forces
     # cache_type=naive anyway, but the colocated baseline must not get a free ride.
@@ -136,8 +144,13 @@ def main() -> int:
     out = {
         "run_id": args.run_id or f"{args.config}_isl{args.isl}_c{C}",
         "config": args.config,
-        "model": "Qwen/Qwen3-30B-A3B (local Instruct-2507)",
-        "precision": {"weights": "bf16", "kv_cache": "bf16"},
+        "model": MODEL_DIR,
+        "precision": {
+            "weights": "mxfp4_packed"
+            if os.environ.get("MINISGL_MXFP4_PACKED")
+            else "bf16",
+            "kv_cache": os.environ.get("KV_CACHE_DTYPE", "auto"),
+        },
         "hardware": args.hardware,
         "stack": {"name": "minisgl-FastAFD-rocm", "version": "amd-mi300x", "rocm": "7.2.4"},
         "isl": actual_isl,

@@ -56,14 +56,38 @@ if [[ -n "${GPUS:-}" ]]; then
   # work for GPUS=0,1,2,3 only because a 0-based contiguous prefix makes the second
   # filter an identity map. See dev_log/qwen/14_performance.md sec 8.
   export HIP_VISIBLE_DEVICES="$GPUS"
-  unset ROCR_VISIBLE_DEVICES
+elif [[ -z "${HIP_VISIBLE_DEVICES:-}" && -n "${ROCR_VISIBLE_DEVICES:-}" ]]; then
+  # Slurm/Pyxis supplies the allocated slice through ROCR_VISIBLE_DEVICES, but
+  # current Ray requires HIP_VISIBLE_DEVICES. Keep Slurm's exact value.
+  export HIP_VISIBLE_DEVICES="$ROCR_VISIBLE_DEVICES"
 fi
+unset ROCR_VISIBLE_DEVICES
 export TVM_FFI_CACHE_DIR="$REPO/cache/tvm-ffi"
 mkdir -p "$TVM_FFI_CACHE_DIR"
 
 for f in "$ENV_PREFIX/bin/python" "$ROCM_PATH/bin/hipcc"; do
   [[ -x "$f" ]] || { echo "missing: $f" >&2; exit 1; }
 done
+
+if ! [[ "$TP" =~ ^[1-9][0-9]*$ ]]; then
+  echo "ERROR: TP must be a positive integer; got TP=$TP" >&2
+  exit 2
+fi
+AVAILABLE_GPUS=$("$ENV_PREFIX/bin/python" -c \
+  'import torch; print(torch.cuda.device_count())' 2>/dev/null) || {
+  echo "ERROR: could not determine the GPUs visible inside this container." >&2
+  exit 1
+}
+if ! [[ "$AVAILABLE_GPUS" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: invalid visible GPU count: $AVAILABLE_GPUS" >&2
+  exit 1
+fi
+if (( TP > AVAILABLE_GPUS )); then
+  echo "ERROR: TP=$TP requires $TP GPUs, but this Slurm container exposes only $AVAILABLE_GPUS." >&2
+  echo "Exit the container and request at least $TP GPUs (for example: shell.sh $TP)." >&2
+  exit 1
+fi
+
 [[ -e "$MODEL" ]] || { echo "model not found: $MODEL" >&2; exit 1; }
 
 echo "[run_rocm] env=$ENV_PREFIX"

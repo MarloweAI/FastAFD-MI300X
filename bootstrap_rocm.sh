@@ -29,7 +29,11 @@ fi
 export ROCM_PATH
 export PATH="$ENV_PREFIX/bin:$ROCM_PATH/bin:$PATH"
 "$ENV_PREFIX/bin/python" -m pip install --no-deps -e "$ROOT"
-"$ENV_PREFIX/bin/python" "$ROOT/scripts/check_rocm_runtime.py"
+if [[ -n "${SKIP_RUNTIME_CHECK:-}" ]]; then
+  echo "[bootstrap] SKIP_RUNTIME_CHECK is set; live GPU validation deferred"
+else
+  "$ENV_PREFIX/bin/python" "$ROOT/scripts/check_rocm_runtime.py"
+fi
 
 echo "[bootstrap] ready"
 echo "ENV_PREFIX=$ENV_PREFIX MODEL=/path/to/model TP=4 GPUS=0,1,2,3 ./run_col_rocm.sh"
