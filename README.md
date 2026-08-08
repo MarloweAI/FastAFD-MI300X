@@ -64,6 +64,26 @@ If only the immutable image is absent, it stages that single file atomically
 from NFS. Avoid leaving `FASTAFD_NODE` unset unless every eligible GPU node has
 already been prepared.
 
+`shell.sh` never downloads model weights. Only `setup.sh` invokes Hugging Face:
+by default it downloads `openai/gpt-oss-120b` into
+`/scratch/models/gpt-oss-120b`. The shell preflight checks that directory, and
+`env.sh` exports it as `MODEL` for the launchers and benchmarks. To use another
+model, keep the repository and local directory explicit and consistent:
+
+```bash
+FASTAFD_NODE=mi300x-02 \
+FASTAFD_MODEL_REPO=ORG/MODEL \
+FASTAFD_MODEL=/scratch/models/my-model \
+./tools/slurm/setup.sh
+
+FASTAFD_NODE=mi300x-02 \
+FASTAFD_MODEL=/scratch/models/my-model \
+./tools/slurm/shell.sh 4
+```
+
+After `source tools/slurm/env.sh`, the second command automatically exposes
+`MODEL=/scratch/models/my-model` inside the container.
+
 Inside the container, explicitly load the environment and work from scratch:
 
 ```bash

@@ -3,7 +3,7 @@
 #   source tools/slurm/env.sh
 
 export ENV_PREFIX="${ENV_PREFIX:-/opt/afd-env}"
-export MODEL="${MODEL:-/scratch/models/gpt-oss-120b}"
+export MODEL="${MODEL:-${FASTAFD_MODEL:-/scratch/models/gpt-oss-120b}}"
 export ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
 export PATH="$ENV_PREFIX/bin:$ROCM_PATH/bin:$PATH"
 

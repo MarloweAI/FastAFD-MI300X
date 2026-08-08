@@ -117,6 +117,25 @@ the wrong size, it atomically stages the immutable image from NFS before
 invoking Pyxis. Run setup once per node, and avoid omitting `FASTAFD_NODE` unless
 all eligible GPU nodes are prepared.
 
+`shell.sh` does not download models. The only model download is performed by
+`setup.sh`, whose defaults are `FASTAFD_MODEL_REPO=openai/gpt-oss-120b` and
+`FASTAFD_MODEL=/scratch/models/gpt-oss-120b`. The shell checks
+`FASTAFD_MODEL`, and `env.sh` exposes the same path as `MODEL` to FastAFD.
+
+For a different model, use the same node-local destination during setup and
+every subsequent shell:
+
+```bash
+FASTAFD_NODE=mi300x-02 \
+FASTAFD_MODEL_REPO=ORG/MODEL \
+FASTAFD_MODEL=/scratch/models/my-model \
+./tools/slurm/setup.sh
+
+FASTAFD_NODE=mi300x-02 \
+FASTAFD_MODEL=/scratch/models/my-model \
+./tools/slurm/shell.sh 4
+```
+
 Other examples:
 
 ```bash
