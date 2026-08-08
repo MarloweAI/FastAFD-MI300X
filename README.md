@@ -38,14 +38,16 @@ scratch:
 | Model | `/scratch/models/gpt-oss-120b` |
 | JIT cache and results | active checkout `cache/` and `results/` |
 
-One-time setup from the head node builds the image, stages it and the source,
-validates one MI300X, and downloads or resumes the model:
+One-time setup from the head node builds the shared image, then stages the
+image, source, and approximately 61 GiB runtime model on one selected node. Run
+it once for each node whose local scratch you intend to use:
 
 ```bash
 git clone https://github.com/MarloweAI/FastAFD-MI300X.git \
   /nfs/home/$USER/FastAFD-MI300X
 cd /nfs/home/$USER/FastAFD-MI300X
-./tools/slurm/setup.sh
+FASTAFD_NODE=mi300x-01 ./tools/slurm/setup.sh
+FASTAFD_NODE=mi300x-02 ./tools/slurm/setup.sh
 ```
 
 The frequent development path reserves GPUs and opens the already-staged
@@ -55,6 +57,12 @@ container. Slurm chooses a node unless `FASTAFD_NODE` is set:
 cd /nfs/home/$USER/FastAFD-MI300X
 FASTAFD_NODE=mi300x-01 ./tools/slurm/shell.sh 4
 ```
+
+Because `/scratch` is node-local, `shell.sh` checks an explicit node before
+launch. If its source or model is absent, it exits with the exact setup command.
+If only the immutable image is absent, it stages that single file atomically
+from NFS. Avoid leaving `FASTAFD_NODE` unset unless every eligible GPU node has
+already been prepared.
 
 Inside the container, explicitly load the environment and work from scratch:
 

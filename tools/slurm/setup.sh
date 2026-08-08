@@ -357,7 +357,14 @@ model_cmd=(
    MODEL_DIR=$2
    ENV_PREFIX=$3
    mkdir -p "$MODEL_DIR"
-   "$ENV_PREFIX/bin/hf" download "$MODEL_REPO" --local-dir "$MODEL_DIR"
+   # Download only the root Hugging Face format consumed by FastAFD. The
+   # repository also contains duplicate original/ and Metal formats that would
+   # otherwise waste well over 100 GiB of node-local scratch.
+   "$ENV_PREFIX/bin/hf" download "$MODEL_REPO" --local-dir "$MODEL_DIR" \
+     --include \
+       config.json generation_config.json tokenizer.json tokenizer_config.json \
+       special_tokens_map.json chat_template.jinja model.safetensors.index.json \
+       "model-*.safetensors" LICENSE README.md USAGE_POLICY
    hostname
    du -sh "$MODEL_DIR"'
   _ "$MODEL_REPO" "$MODEL_DIR" "$ENV_PREFIX"
