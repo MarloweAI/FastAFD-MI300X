@@ -97,8 +97,12 @@ if [[ -n "${GPUS:-}" ]]; then
   # contiguous prefix like 0,1,2,3 hid the bug by making the second filter an identity
   # map. See dev_log/qwen/14_performance.md sec 8.
   export HIP_VISIBLE_DEVICES="$GPUS"
-  unset ROCR_VISIBLE_DEVICES
+elif [[ -z "${HIP_VISIBLE_DEVICES:-}" && -n "${ROCR_VISIBLE_DEVICES:-}" ]]; then
+  # Slurm/Pyxis supplies the allocated slice through ROCR_VISIBLE_DEVICES, but
+  # current Ray requires HIP_VISIBLE_DEVICES. Keep Slurm's exact value.
+  export HIP_VISIBLE_DEVICES="$ROCR_VISIBLE_DEVICES"
 fi
+unset ROCR_VISIBLE_DEVICES
 export MINISGL_AFD_MOE_BACKEND="${MINISGL_AFD_MOE_BACKEND:-rccl}"
 export MINISGL_PYNCCL_MAX_BUFFER_SIZE="${MINISGL_PYNCCL_MAX_BUFFER_SIZE:-0}"
 
@@ -119,10 +123,26 @@ for f in "$ENV_PREFIX/bin/python" "$ROCM_PATH/bin/hipcc"; do
 done
 [[ -e "$MODEL" ]] || { echo "model not found: $MODEL" >&2; exit 1; }
 
+for value_name in ATTN_TP MLP_TP MLP_EP; do
+  value=${!value_name}
+  if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: $value_name must be a positive integer; got $value_name=$value" >&2
+    exit 2
+  fi
+done
 TOTAL=$(( ATTN_TP + MLP_TP ))
-NGPU=$(python -c "import torch; print(torch.cuda.device_count())" 2>/dev/null || echo 0)
+NGPU=$("$ENV_PREFIX/bin/python" -c \
+  'import torch; print(torch.cuda.device_count())' 2>/dev/null) || {
+  echo "ERROR: could not determine the GPUs visible inside this container." >&2
+  exit 1
+}
+if ! [[ "$NGPU" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: invalid visible GPU count: $NGPU" >&2
+  exit 1
+fi
 if (( TOTAL > NGPU )); then
-  echo "need $TOTAL GPUs for ${ATTN_TP}A+${MLP_TP}F, found $NGPU" >&2
+  echo "ERROR: ${ATTN_TP} attention + ${MLP_TP} FFN requires $TOTAL GPUs," >&2
+  echo "but this Slurm container exposes only $NGPU. Exit and request at least $TOTAL GPUs." >&2
   exit 1
 fi
 
