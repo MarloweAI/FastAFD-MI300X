@@ -110,6 +110,13 @@ cd /nfs/home/$USER/FastAFD-MI300X
 FASTAFD_NODE=mi300x-02 ./tools/slurm/shell.sh 4
 ```
 
+For an explicit `FASTAFD_NODE`, `shell.sh` first checks that node's local
+source and approximately 61 GiB runtime model. If either is absent, it exits and
+prints the node-specific `setup.sh` command. If only the image is absent or has
+the wrong size, it atomically stages the immutable image from NFS before
+invoking Pyxis. Run setup once per node, and avoid omitting `FASTAFD_NODE` unless
+all eligible GPU nodes are prepared.
+
 Other examples:
 
 ```bash
