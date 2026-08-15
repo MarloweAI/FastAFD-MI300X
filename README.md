@@ -1,14 +1,20 @@
-# FastAFD for AMD MI300X
+# FastAFD for AMD MI355X
 
-Minimal, reproducible ROCm/gfx942 runtime extracted from the
-[`amd-mi300x`](https://github.com/hao-ai-lab/FastAFD) port of FastAFD. The
-upstream project targets NVIDIA Blackwell; this repository contains the AMD
-runtime needed for colocated serving and the experimental single-node AFD path.
+MI355X-native (`gfx950`) FastAFD for GPT-OSS-120B. This branch uses TP1 role
+workers, arbitrary full-node attention:FFN splits, uneven full-world expert
+parallelism, and AITER's packed-MXFP4 CK kernels. It does not preserve MI300X
+behavior when CDNA4 offers a better implementation.
 
-The serving source is unchanged from AMD port commit `9512cb8`. This repository
-does **not** contain model weights, generated caches, development logs, reports,
-profiler output, Git history from the development branch, or CUDA-only DeepEP
-and DeepGEMM sources.
+The reproducible Colovore workflow, correctness gates, same-node vLLM baseline,
+42-point AFD sweep, and combined Pareto plot are documented in
+[`experiments/mi355x/README.md`](experiments/mi355x/README.md). The direct launcher
+is [`run_afd_mi355x.sh`](run_afd_mi355x.sh).
+
+The remaining MI300X instructions below are retained only as implementation
+history while the standalone MI355X packaging is completed. Do not use their
+gfx942 dependency pins for MI355X benchmark claims.
+
+## MI300X reference material (historical)
 
 ## Validated configuration
 

@@ -30,6 +30,7 @@ class MoeA2ABackend(Enum):
 
 class MoeRunnerBackend(Enum):
     AUTO = "auto"
+    AITER = "aiter"
     TRITON = "triton"
     TRITON_FP8 = "triton_fp8"
     TRITON_KERNELS = "triton_kernel"
@@ -37,6 +38,9 @@ class MoeRunnerBackend(Enum):
 
     def is_auto(self) -> bool:
         return self == MoeRunnerBackend.AUTO
+
+    def is_aiter(self) -> bool:
+        return self == MoeRunnerBackend.AITER
 
     def is_triton(self) -> bool:
         return self == MoeRunnerBackend.TRITON
