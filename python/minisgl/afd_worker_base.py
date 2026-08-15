@@ -714,8 +714,7 @@ class BaseAfdWorker:
             return {
                 k: (
                     v
-                    if not v.is_floating_point()
-                    or v.dtype == torch.float8_e4m3fn
+                    if v.dtype == torch.float8_e4m3fn
                     or (v.dtype == torch.float32 and k.endswith("_scale"))
                     else v.to(torch.float32)
                     if _minimax_fp32_key(k) or _glm4_fp32_key(k)
@@ -793,22 +792,11 @@ class BaseAfdWorker:
                 for idx in (0, len(remote_layers) - 1):
                     if 0 <= idx < len(remote_layers):
                         experts = remote_layers[idx].mlp.experts
-                        if getattr(experts, "_is_mxfp4_packed", False):
-                            shape_text = (
-                                f"gate_up_blocks={tuple(experts.gate_up_proj_blocks.shape)} "
-                                f"down_blocks={tuple(experts.down_proj_blocks.shape)}"
-                            )
-                        else:
-                            shape_text = (
-                                f"gate_up={tuple(experts.gate_up_proj.shape)}:"
-                                f"{experts.gate_up_proj.dtype} "
-                                f"down={tuple(experts.down_proj.shape)}:"
-                                f"{experts.down_proj.dtype}"
-                            )
                         shapes.append(
                             "layer_index="
                             f"{idx} local_experts={int(getattr(experts, 'local_num_experts', -1))} "
-                            f"{shape_text}"
+                            f"gate_up={tuple(experts.gate_up_proj.shape)}:{experts.gate_up_proj.dtype} "
+                            f"down={tuple(experts.down_proj.shape)}:{experts.down_proj.dtype}"
                         )
                 log_line(
                     self.log_path,

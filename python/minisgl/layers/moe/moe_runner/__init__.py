@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from .aiter import AiterMxfp4Runner
 from .base import MoeA2ABackend, MoeRunner, MoeRunnerBackend, MoeRunnerConfig
 from .deepgemm_grouped import DeepGEMMGroupedRunner
 from .triton import TritonRunner
@@ -12,8 +11,6 @@ def create_moe_runner(
     moe_runner_config: MoeRunnerConfig,
 ) -> MoeRunner:
     backend = MoeRunnerBackend(runner_backend)
-    if backend.is_aiter():
-        return AiterMxfp4Runner(config=moe_runner_config)
     if backend.is_auto() or backend.is_triton():
         return TritonRunner(config=moe_runner_config)
     if backend.is_triton_fp8():
@@ -32,7 +29,6 @@ __all__ = [
     "MoeRunner",
     "MoeRunnerBackend",
     "MoeRunnerConfig",
-    "AiterMxfp4Runner",
     "DeepGEMMGroupedRunner",
     "TritonRunner",
     "TritonFp8Runner",

@@ -149,6 +149,11 @@ def _validate_afd_parallel_args(
         if value < 1:
             parser.error(f"{name} must be >= 1, got {value}")
 
+    if not _mutually_divisible(attn_dp, mlp_dp):
+        parser.error(
+            "--afd-attn-dp-size and --afd-mlp-dp-size must be mutually "
+            f"divisible, got attn_dp={attn_dp} mlp_dp={mlp_dp}"
+        )
     if not _mutually_divisible(attn_tp, mlp_tp):
         parser.error(
             "--afd-attn-tp-size and --afd-mlp-tp-size must be mutually "
@@ -425,8 +430,8 @@ def parse_args(args: List[str], run_shell: bool = False) -> Tuple[ServerArgs, bo
         type=int,
         default=ServerArgs.afd_attn_dp_size,
         help=(
-            "AFD runtime attention-side DP/worker count. Arbitrary positive "
-            "role counts are supported with full-world expert parallelism."
+            "AFD runtime attention-side DP size. Must be mutually divisible "
+            "with --afd-mlp-dp-size."
         ),
     )
 
@@ -436,7 +441,7 @@ def parse_args(args: List[str], run_shell: bool = False) -> Tuple[ServerArgs, bo
         default=ServerArgs.afd_mlp_dp_size,
         help=(
             "AFD runtime model/mlp-side DP size. This is also the dense QKVO "
-            "DP size and the TP1 expert-worker count in MI355X split runs."
+            "DP size and must be mutually divisible with --afd-attn-dp-size."
         ),
     )
 
@@ -462,12 +467,13 @@ def parse_args(args: List[str], run_shell: bool = False) -> Tuple[ServerArgs, bo
     #       Full-world EP: one expert-parallel group spans the whole MLP world.
     #
     # Target-valid combinations:
-    #   - attn_dp and mlp_dp may be arbitrary positive role counts. Full-world
-    #     M:N dispatch does not require one DP count to divide the other.
+    #   - attn_dp and mlp_dp may be <, ==, or > each other, but must be
+    #     mutually divisible so request ownership can project cleanly.
     #   - attn_tp and mlp_tp may be <, ==, or > each other, but must be
     #     mutually divisible so Q/K/V/O head shards can fan in/out cleanly.
     #   - afd_mlp_ep_size is restricted to the three supported modes above;
-    #     expert shards are padded when num_experts is not divisible by EP.
+    #     num_experts must also be divisible by afd_mlp_ep_size at model load
+    #     time when EP is enabled.
     #
     # Current runtime subset:
     #   - Dense QKVO TP communication supports both mutually-divisible
@@ -521,11 +527,10 @@ def parse_args(args: List[str], run_shell: bool = False) -> Tuple[ServerArgs, bo
 
     parser.add_argument(
         "--afd-moe-runner-backend",
-        choices=["auto", "aiter", "triton", "triton_fp8", "triton_kernel", "deep_gemm"],
+        choices=["auto", "triton", "triton_fp8", "triton_kernel", "deep_gemm"],
         default=ServerArgs.afd_moe_runner_backend,
         help=(
-            "MoE compute runner backend. 'aiter' is the MI355X packed-MXFP4 "
-            "path; 'triton_fp8' uses the FP8-native "
+            "MoE compute runner backend. 'triton_fp8' uses the FP8-native "
             "Triton fallback; 'deep_gemm' uses minisgl's vendored grouped "
             "DeepGEMM kernels for DeepEP V2 expanded layout."
         ),

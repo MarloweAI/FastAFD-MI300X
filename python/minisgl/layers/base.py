@@ -40,15 +40,9 @@ class BaseOP:
             if name.startswith("_"):
                 continue
             if isinstance(param, torch.Tensor):
-                key = _concat_prefix(prefix, name)
-                item = state_dict.pop(key)
+                item = state_dict.pop(_concat_prefix(prefix, name))
                 assert isinstance(item, torch.Tensor)
-                if param.shape != item.shape or param.dtype != item.dtype:
-                    raise RuntimeError(
-                        f"state tensor mismatch for {key}: destination "
-                        f"shape={tuple(param.shape)} dtype={param.dtype}, source "
-                        f"shape={tuple(item.shape)} dtype={item.dtype}"
-                    )
+                assert param.shape == item.shape and param.dtype == item.dtype
                 setattr(self, name, item)
             elif isinstance(param, BaseOP):
                 param.load_state_dict(
