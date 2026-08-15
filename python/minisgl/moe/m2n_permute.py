@@ -117,7 +117,10 @@ def _post_permute_triton_to_m2n(runner_output: torch.Tensor, dispatch_output):
     )
 
 
-# The BF16 and FP8 Triton runners have distinct backend keys, so register both.
+# AITER and the BF16/FP8 Triton runners consume the same top-k-one view of the
+# expanded M:N rows; their compute kernels differ after this layout bridge.
+register_pre_permute("m2n_expanded", "aiter")(_pre_permute_m2n_to_triton)
+register_post_permute("aiter", "m2n_expanded")(_post_permute_triton_to_m2n)
 register_pre_permute("m2n_expanded", "triton_fp8")(_pre_permute_m2n_to_triton)
 register_post_permute("triton_fp8", "m2n_expanded")(_post_permute_triton_to_m2n)
 

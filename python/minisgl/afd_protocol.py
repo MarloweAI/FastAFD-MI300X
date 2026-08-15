@@ -56,12 +56,9 @@ class AfdTopology:
             if value < 1:
                 raise ValueError(f"afd topology {name} must be >= 1, got {value}")
             object.__setattr__(self, name, value)
-        self._validate_mutually_divisible(
-            "attn_dp_size",
-            self.attn_dp_size,
-            "mlp_dp_size",
-            self.mlp_dp_size,
-        )
+        # DP is role count in the MI355X full-world-EP topology.  The M:N
+        # collective connects every AG source to every EG shard, so unlike TP
+        # there is no divisibility requirement between the two role counts.
         self._validate_mutually_divisible(
             "attn_tp_size",
             self.attn_tp_size,
@@ -120,13 +117,13 @@ class AfdTopology:
 
     @property
     def attn_fanin_per_mlp_dp(self) -> int:
-        """How many attention DP lanes can feed one MLP DP lane."""
-        return max(1, self.attn_dp_size // self.mlp_dp_size)
+        """Largest number of attention lanes mapped to one MLP lane."""
+        return max(1, (self.attn_dp_size + self.mlp_dp_size - 1) // self.mlp_dp_size)
 
     @property
     def mlp_fanout_per_attn_dp(self) -> int:
-        """How many MLP DP lanes one attention DP lane may drive."""
-        return max(1, self.mlp_dp_size // self.attn_dp_size)
+        """Largest number of MLP lanes mapped to one attention lane."""
+        return max(1, (self.mlp_dp_size + self.attn_dp_size - 1) // self.attn_dp_size)
 
     def mlp_dp_for_attn_dp(self, attn_dp_rank: int) -> int:
         """Primary MLP DP lane assigned to an attention DP lane."""

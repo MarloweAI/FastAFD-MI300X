@@ -106,6 +106,10 @@ def _post_permute_triton_to_standard(
     return StandardCombineInput(hidden_states=runner_output)
 
 
+register_pre_permute("standard", "aiter")(_pre_permute_standard_to_triton)
+register_post_permute("aiter", "standard")(_post_permute_triton_to_standard)
+
+
 @register_pre_permute("standard", "triton_fp8")
 def _pre_permute_standard_to_triton_fp8(
     dispatch_output: StandardDispatchOutput,
