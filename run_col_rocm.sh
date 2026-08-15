@@ -31,7 +31,6 @@
 set -euo pipefail
 
 ENV_PREFIX="${ENV_PREFIX:-$HOME/miniforge3-yanxiong/envs/minisgl-rocm7}"
-PYTHON_BIN="${PYTHON_BIN:-$ENV_PREFIX/bin/python}"
 MODEL="${MODEL:-/home/marlowe/models/Qwen3-30B-A3B-Instruct-2507}"
 PORT="${PORT:-19295}"
 TP="${TP:-1}"
@@ -44,7 +43,6 @@ GRAPH_MAX_BS="${GRAPH_MAX_BS:-32}"
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO"
-export PYTHONPATH="$REPO/python${PYTHONPATH:+:$PYTHONPATH}"
 
 export ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
 export PATH="$ENV_PREFIX/bin:$ROCM_PATH/bin:$PATH"
@@ -67,7 +65,7 @@ unset ROCR_VISIBLE_DEVICES
 export TVM_FFI_CACHE_DIR="$REPO/cache/tvm-ffi"
 mkdir -p "$TVM_FFI_CACHE_DIR"
 
-for f in "$PYTHON_BIN" "$ROCM_PATH/bin/hipcc"; do
+for f in "$ENV_PREFIX/bin/python" "$ROCM_PATH/bin/hipcc"; do
   [[ -x "$f" ]] || { echo "missing: $f" >&2; exit 1; }
 done
 
@@ -75,7 +73,7 @@ if ! [[ "$TP" =~ ^[1-9][0-9]*$ ]]; then
   echo "ERROR: TP must be a positive integer; got TP=$TP" >&2
   exit 2
 fi
-AVAILABLE_GPUS=$("$PYTHON_BIN" -c \
+AVAILABLE_GPUS=$("$ENV_PREFIX/bin/python" -c \
   'import torch; print(torch.cuda.device_count())' 2>/dev/null) || {
   echo "ERROR: could not determine the GPUs visible inside this container." >&2
   exit 1
@@ -129,7 +127,7 @@ if [[ -n "${EXTRA_ARGS:-}" ]]; then
   echo "[run_rocm] EXTRA_ARGS: ${EXTRA_ARGS}"
 fi
 
-exec "$PYTHON_BIN" -m minisgl \
+exec python -m minisgl \
   --model-path "$MODEL" \
   --tp-size "$TP" \
   --cuda-graph-max-bs "$GRAPH_MAX_BS" \
